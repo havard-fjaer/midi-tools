@@ -1,28 +1,45 @@
 import mido
 import time
 
-data = [0x00, 0x21, 0x27, 0x19, 0x34, 0x00, 0x01]
-output_port_name = 'ES-9 MIDI Out'
-input_port_name = 'nanoKONTROL2 SLIDER/KNOB'
+DEBUG = True
+SLEEP_TIME = 0.01
 
-# Åpner output-porten
-outport = mido.open_output(output_port_name)
+INPUT_PORT_NAME = 'nanoKONTROL2 SLIDER/KNOB'
+OUTPUT_PORT_NAME = 'ES-9 MIDI Out'
 
-# Åpner input-porten
-inport = mido.open_input(input_port_name)
+VENDOR_EXPERT_SLEEPERS = [0x00, 0x21, 0x27]
+DEVICE_ES9 = [0x19]
+MESSAGE_TYPE_SET_VIRTUAL_MIX = [0x34]
 
-try:
-    while True:
-        for msg in inport.iter_pending():
-            print(msg)
-            data[5] = msg.control
-            data[6] = msg.value
-            outport.send(mido.Message('sysex', data=data))
-        time.sleep(0.1)
-except KeyboardInterrupt:
-    # Brukeren avslutter programmet (f.eks. ved å trykke Ctrl+C)
-    pass
-finally:
-    # Lukker portene når programmet avsluttes
-    inport.close()
-    outport.close()
+
+def main():
+    try:
+        out_port = mido.open_output(OUTPUT_PORT_NAME)
+        in_port = mido.open_input(INPUT_PORT_NAME)
+
+        while True:
+            for message in in_port.iter_pending():
+        
+                print_debug(message)
+                faders = message.control in range(0, 7)
+                pots = message.control in range(16, 23)
+
+                if message.type == 'control_change' and (faders or pots):
+                    data = VENDOR_EXPERT_SLEEPERS + DEVICE_ES9 + MESSAGE_TYPE_SET_VIRTUAL_MIX + [message.control] + [message.value]
+                    out_port.send(mido.Message('sysex', data=data))
+
+            time.sleep(SLEEP_TIME)
+
+    except KeyboardInterrupt:
+        pass
+    finally:
+        in_port.close()
+        out_port.close()
+
+
+def print_debug(msg):
+    if DEBUG:
+        print(msg)
+
+if __name__ == '__main__':
+    main()        
