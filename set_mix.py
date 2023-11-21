@@ -10,6 +10,7 @@ OUTPUT_PORT_NAME = 'ES-9 MIDI Out'
 VENDOR_EXPERT_SLEEPERS = [0x00, 0x21, 0x27]
 DEVICE_ES9 = [0x19]
 MESSAGE_TYPE_SET_VIRTUAL_MIX = [0x34]
+CONTROL_INDEX = 5
 
 
 def main():
@@ -37,7 +38,9 @@ def main():
                         [message.value]
                     )
                     print_debug(data)
-                    out_port.send(mido.Message('sysex', data=data))
+                    out_port.send(mido.Message('sysex', data=data)) # Main L/R
+                    data[CONTROL_INDEX] = data[CONTROL_INDEX] + 0x10  # also control mix 3/4 
+                    out_port.send(mido.Message('sysex', data=data)) # Phones
 
             time.sleep(SLEEP_TIME)
 
