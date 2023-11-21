@@ -21,11 +21,22 @@ def main():
             for message in in_port.iter_pending():
         
                 print_debug(message)
-                faders = message.control in range(0, 7)
-                pots = message.control in range(16, 23)
+                faders = message.control in range(0, 8)
+                pots = message.control in range(16, 24)
 
                 if message.type == 'control_change' and (faders or pots):
-                    data = VENDOR_EXPERT_SLEEPERS + DEVICE_ES9 + MESSAGE_TYPE_SET_VIRTUAL_MIX + [message.control] + [message.value]
+                    if faders:
+                        control = message.control # faders control volume on control 0-7
+                    else:  
+                        control = message.control - 8 # pots control panning on control 8-15
+                    data = (
+                        VENDOR_EXPERT_SLEEPERS +
+                        DEVICE_ES9 +
+                        MESSAGE_TYPE_SET_VIRTUAL_MIX +
+                        [control] +
+                        [message.value]
+                    )
+                    print_debug(data)
                     out_port.send(mido.Message('sysex', data=data))
 
             time.sleep(SLEEP_TIME)
