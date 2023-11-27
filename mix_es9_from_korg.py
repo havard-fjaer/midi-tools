@@ -1,7 +1,7 @@
 import mido
 import time
 
-DEBUG = True
+DEBUG = False
 SLEEP_TIME = 0.01
 
 INPUT_PORT_NAME = 'nanoKONTROL2 SLIDER/KNOB'
